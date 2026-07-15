@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fulls — les teves notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E7;
+    --paper-2:#EFE8D8;
+    --ink:#2B2A28;
+    --ink-soft:#6B6459;
+    --indigo:#35506B;
+    --plum:#7C5C7A;
+    --moss:#7C9070;
+    --ochre:#C99A3E;
+    --blush:#C97C78;
+    --sky:#5F8CA3;
+    --line:#DED5C2;
+    --white:#FFFDF9;
+    --shadow: 0 1px 2px rgba(43,42,40,0.06), 0 4px 14px rgba(43,42,40,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Karla','Noto Sans JP',sans-serif;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(43,42,40,0.035) 1px, transparent 0);
+    background-size: 18px 18px;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{ display:flex; min-height:100vh; }
+
+  /* ---------- SIDEBAR ---------- */
+  #sidebar{
+    width:250px;
+    flex-shrink:0;
+    padding:28px 0 28px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .brand{
+    display:flex; align-items:baseline; gap:8px;
+    padding-right:16px;
+  }
+  .brand h1{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:28px;
+    margin:0;
+    color:var(--indigo);
+    letter-spacing:0.3px;
+  }
+  .brand span{
+    font-size:11px;
+    color:var(--ink-soft);
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:0.5px;
+  }
+  .search-box{
+    margin-right:16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 12px;
+    box-shadow: var(--shadow);
+  }
+  .search-box input{
+    border:none; outline:none; background:transparent;
+    font-family:'Karla',sans-serif; font-size:13.5px; color:var(--ink);
+    width:100%;
+  }
+  .search-box input::placeholder{ color:var(--ink-soft); opacity:0.7; }
+  .search-box svg{ flex-shrink:0; opacity:0.5; }
+
+  .tabs-shelf{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    overflow-y:auto;
+  }
+  .tab{
+    position:relative;
+    padding:10px 16px 10px 14px;
+    border-radius:3px 14px 14px 3px;
+    border-left:5px solid var(--tab-color, var(--ink-soft));
+    background: color-mix(in srgb, var(--tab-color, var(--ink-soft)) 12%, var(--white));
+    cursor:pointer;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    transition: transform .12s ease, box-shadow .12s ease, margin-right .12s ease;
+    box-shadow: 0 1px 0 rgba(43,42,40,0.02);
+    user-select:none;
+  }
+  .tab:nth-child(odd){ margin-right:18px; }
+  .tab:nth-child(even){ margin-right:2px; }
+  .tab:hover{ transform: translateX(2px); box-shadow: var(--shadow); }
+  .tab.active{
+    background: color-mix(in srgb, var(--tab-color, var(--ink-soft)) 26%, var(--white));
+    box-shadow: var(--shadow);
+    margin-right:0 !important;
+  }
+  .tab .tlabel{ display:flex; flex-direction:column; gap:1px; overflow:hidden; }
+  .tab .tname{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tab .ttype{ font-size:10px; font-weight:500; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; text-transform:lowercase; }
+  .tab .tcount{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft); font-weight:400; flex-shrink:0; }
+  .tab .tmenu{
+    opacity:0; flex-shrink:0; width:20px; height:20px; display:flex; align-items:center; justify-content:center;
+    border-radius:6px; color:var(--ink-soft);
+  }
+  .tab:hover .tmenu{ opacity:1; }
+  .tab .tmenu:hover{ background:rgba(43,42,40,0.08); }
+
+  .new-folder-btn{
+    margin-right:16px;
+    display:flex; align-items:center; gap:8px;
+    padding:9px 14px;
+    border-radius:10px;
+    border:1.5px dashed var(--line);
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:13px; font-weight:600;
+    cursor:pointer;
+    font-family:'Karla',sans-serif;
+    transition: all .12s ease;
+  }
+  .new-folder-btn:hover{ border-color:var(--indigo); color:var(--indigo); background:rgba(53,80,107,0.05); }
+
+  /* ---------- MAIN ---------- */
+  #main{
+    flex:1;
+    padding:32px 40px 60px 32px;
+    min-width:0;
+  }
+  .main-top{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .view-title{
+    font-family:'Fraunces', serif; font-weight:500; font-size:26px; color:var(--ink);
+    display:flex; align-items:center; gap:10px;
+  }
+  .view-title .dot{ width:11px; height:11px; border-radius:50%; background:var(--tab-color,var(--ink-soft)); }
+  .view-sub{ font-size:12px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; margin-top:2px; }
+
+  /* composer */
+  .composer{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow: var(--shadow);
+    padding:14px 18px;
+    margin-bottom:30px;
+    max-width:620px;
+    cursor:text;
+  }
+  .composer.collapsed{ color:var(--ink-soft); font-size:14.5px; }
+  .composer input.ctitle{
+    width:100%; border:none; outline:none; background:transparent;
+    font-family:'Fraunces',serif; font-weight:500; font-size:16px; color:var(--ink);
+    margin-bottom:6px;
+  }
+  .composer textarea.cbody{
+    width:100%; border:none; outline:none; background:transparent; resize:none;
+    font-family:'Karla',sans-serif; font-size:14px; color:var(--ink); line-height:1.5;
+    min-height:22px;
+  }
+  .composer-expanded-tools{
+    display:flex; align-items:center; justify-content:space-between; margin-top:10px; flex-wrap:wrap; gap:10px;
+  }
+  .swatches{ display:flex; gap:6px; align-items:center; }
+  .swatch{
+    width:20px; height:20px; border-radius:50%; cursor:pointer; border:2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(43,42,40,0.12);
+  }
+  .swatch.selected{ border-color:var(--ink); }
+  .composer-actions{ display:flex; gap:8px; align-items:center; }
+  select.folder-select{
+    font-family:'Karla',sans-serif; font-size:12.5px; color:var(--ink-soft);
+    border:1px solid var(--line); border-radius:8px; padding:5px 8px; background:var(--white); cursor:pointer;
+  }
+  .btn{
+    font-family:'Karla',sans-serif; font-weight:600; font-size:13px;
+    border:none; border-radius:9px; padding:7px 14px; cursor:pointer;
+    transition: filter .1s ease;
+  }
+  .btn:hover{ filter:brightness(0.96); }
+  .btn.primary{ background:var(--indigo); color:var(--white); }
+  .btn.ghost{ background:transparent; color:var(--ink-soft); }
+  .btn.small{ padding:5px 10px; font-size:12px; }
+  .icon-btn{
+    width:28px; height:28px; border-radius:8px; border:none; background:transparent; color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .icon-btn:hover{ background:rgba(43,42,40,0.08); color:var(--ink); }
+
+  /* masonry grid */
+  .grid{
+    column-width: 240px;
+    column-gap: 16px;
+  }
+  .note-card{
+    background: var(--card-color, var(--white));
+    border:1px solid rgba(43,42,40,0.08);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:16px;
+    break-inside:avoid;
+    box-shadow: var(--shadow);
+    cursor:pointer;
+    position:relative;
+    transition: box-shadow .15s ease, transform .1s ease;
+  }
+  .note-card:hover{ box-shadow: 0 2px 6px rgba(43,42,40,0.1), 0 8px 20px rgba(43,42,40,0.08); }
+  .note-card .ncard-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:6px; }
+  .note-card h3{
+    font-family:'Fraunces',serif; font-weight:500; font-size:15.5px; margin:0 0 6px 0; color:var(--ink);
+    word-break:break-word;
+  }
+  .note-card .pin-btn{ opacity:0; flex-shrink:0; }
+  .note-card:hover .pin-btn{ opacity:0.6; }
+  .note-card .pin-btn.pinned{ opacity:1; color:var(--ochre); }
+  .note-card .ncontent{
+    font-size:13.5px; line-height:1.55; color:var(--ink); white-space:pre-wrap; word-break:break-word;
+  }
+  .checklist-item{ display:flex; align-items:flex-start; gap:8px; font-size:13.5px; margin-bottom:4px; }
+  .checklist-item input[type=checkbox]{ margin-top:3px; accent-color:var(--moss); flex-shrink:0; cursor:pointer; }
+  .checklist-item.done span{ text-decoration:line-through; color:var(--ink-soft); }
+  .note-card .nfooter{
+    display:flex; align-items:center; justify-content:space-between; margin-top:10px; opacity:0; transition:opacity .12s ease;
+  }
+  .note-card:hover .nfooter{ opacity:1; }
+  .folder-chip{
+    font-size:10.5px; font-family:'JetBrains Mono',monospace; padding:3px 8px; border-radius:20px;
+    background:rgba(43,42,40,0.07); color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;
+  }
+  .nfooter-actions{ display:flex; gap:2px; }
+
+  .empty-state{
+    color:var(--ink-soft); font-size:14px; text-align:center; padding:60px 20px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .empty-state .big{ font-family:'Fraunces',serif; font-style:italic; font-size:20px; color:var(--ink); }
+
+  /* modal overlay for expanded note + folder creation */
+  .overlay{
+    position:fixed; inset:0; background:rgba(43,42,40,0.35); backdrop-filter: blur(2px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal{
+    background:var(--card-color, var(--white)); border-radius:16px; width:100%; max-width:560px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25); padding:22px 24px; max-height:85vh; overflow-y:auto;
+  }
+  .modal-folder{ max-width:380px; }
+  .modal input.mtitle{
+    width:100%; border:none; outline:none; background:transparent; font-family:'Fraunces',serif;
+    font-weight:500; font-size:19px; margin-bottom:10px; color:var(--ink);
+  }
+  .modal textarea.mbody{
+    width:100%; border:none; outline:none; background:transparent; resize:vertical; min-height:120px;
+    font-family:'Karla',sans-serif; font-size:14.5px; line-height:1.6; color:var(--ink);
+  }
+  .modal-checklist{ display:flex; flex-direction:column; gap:5px; margin-bottom:6px; }
+  .modal-checklist .checklist-item input[type=text]{
+    border:none; outline:none; background:transparent; font-family:'Karla',sans-serif; font-size:14px; color:var(--ink); flex:1;
+  }
+  .modal-add-item{ display:flex; align-items:center; gap:8px; color:var(--ink-soft); font-size:13px; cursor:text; }
+  .modal-bottom{ display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-wrap:wrap; gap:10px; }
+  .field-label{ font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; margin-bottom:6px; display:block; }
+  .form-input{
+    width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-family:'Karla',sans-serif;
+    font-size:14px; outline:none; background:var(--white); color: var(--ink);
+  }
+  .form-input:focus{ border-color:var(--indigo); }
+  .form-group{ margin-bottom:14px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+  .type-toggle{ display:flex; gap:8px; margin-bottom:14px; }
+  .type-toggle button{
+    flex:1; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--white);
+    font-family:'Karla',sans-serif; font-size:13px; font-weight:600; color:var(--ink-soft); cursor:pointer;
+  }
+  .type-toggle button.active{ border-color:var(--indigo); color:var(--indigo); background:rgba(53,80,107,0.06); }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); padding:9px 18px; border-radius:20px;
+    font-size:13px; font-family:'Karla',sans-serif; box-shadow: var(--shadow); z-index:100;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:rgba(43,42,40,0.18); border-radius:10px; }
+
+  @media (max-width: 760px){
+    #app{ flex-direction:column; }
+    #sidebar{ width:100%; padding:18px 18px 12px 18px; }
+    .tab:nth-child(odd),.tab:nth-child(even){ margin-right:0; }
+    #main{ padding:20px; }
+    .grid{ column-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div class="brand">
+      <h1>Fulls</h1>
+      <span>紙・notes</span>
+    </div>
+    <div class="search-box">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" placeholder="Cerca a totes les notes…" />
+    </div>
+    <div class="tabs-shelf" id="tabsShelf"></div>
+    <button class="new-folder-btn" id="newFolderBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova carpeta
+    </button>
+  </div>
+
+  <div id="main">
+    <div class="main-top">
+      <div>
+        <div class="view-title" id="viewTitle"><span class="dot" style="display:none"></span><span id="viewTitleText">Totes les notes</span></div>
+        <div class="view-sub" id="viewSub"></div>
+      </div>
+    </div>
+
+    <div class="composer collapsed" id="composer">
+      <div id="composerCollapsedText">Fes una nota…</div>
+      <div id="composerExpanded" style="display:none;">
+        <input class="ctitle" id="cTitle" placeholder="Títol" />
+        <div id="cChecklistWrap" style="display:none;"></div>
+        <textarea class="cbody" id="cBody" placeholder="Escriu alguna cosa…" rows="1"></textarea>
+        <div class="composer-expanded-tools">
+          <div class="swatches" id="cSwatches"></div>
+          <div class="composer-actions">
+            <select class="folder-select" id="cFolderSelect"></select>
+            <button class="btn ghost small" id="cChecklistToggle" type="button">☑ Llista</button>
+            <button class="btn ghost small" id="cCancel" type="button">Cancel·la</button>
+            <button class="btn primary small" id="cSave" type="button">Desa</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="big">Encara no hi ha res aquí</div>
+      <div>Crea la teva primera nota amb el quadre de dalt.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const COLORS = [
+  {name:'Paper', value:'#FFFDF9'},
+  {name:'Sakura', value:'#F7DCE0'},
+  {name:'Matcha', value:'#DCE8D1'},
+  {name:'Sora', value:'#D8E6EC'},
+  {name:'Kuchinashi', value:'#F3E3B3'},
+  {name:'Fuji', value:'#E3DAF0'},
+  {name:'Momiji', value:'#F0D9C6'},
+  {name:'Sumi', value:'#E2E0DC'},
+];
+const FOLDER_COLORS = ['#35506B','#7C5C7A','#7C9070','#C99A3E','#C97C78','#5F8CA3','#8A7A5C','#5C7A8A'];
+
+let state = {
+  folders: [],
+  notes: [],
+  activeFolder: 'all', // 'all' | 'unfiled' | folder.id
+  search: '',
+  loaded: false,
+};
+
+const $ = (sel) => document.querySelector(sel);
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+
+function showToast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=> t.classList.remove('show'), 1800);
+}
+
+async function loadData(){
+  try{
+    const f = localStorage.getItem('fulls_folders');
+    state.folders = f ? JSON.parse(f) : null;
+  }catch(e){ console.error('Error carregant carpetes', e); state.folders = null; }
+  try{
+    const n = localStorage.getItem('fulls_notes');
+    state.notes = n ? JSON.parse(n) : [];
+  }catch(e){ console.error('Error carregant notes', e); state.notes = []; }
+
+  if(!state.folders){
+    state.folders = [
+      {id: uid(), name:'Viatges', type:'travel', color: FOLDER_COLORS[0]},
+      {id: uid(), name:'Tasques', type:'todo', color: FOLDER_COLORS[2]},
+      {id: uid(), name:'Objectius', type:'goals', color: FOLDER_COLORS[3]},
+      {id: uid(), name:'Personal', type:'life', color: FOLDER_COLORS[1]},
+    ];
+    await saveFolders();
+  }
+  state.loaded = true;
+}
+
+async function saveFolders(){
+  try{ localStorage.setItem('fulls_folders', JSON.stringify(state.folders)); }
+  catch(e){ console.error('Error desant carpetes', e); showToast('No s\'ha pogut desar'); }
+}
+async function saveNotes(){
+  try{ localStorage.setItem('fulls_notes', JSON.stringify(state.notes)); }
+  catch(e){ console.error('Error desant notes', e); showToast('No s\'ha pogut desar'); }
+}
+
+function folderById(id){ return state.folders.find(f=>f.id===id); }
+
+function matchesSearch(note, q){
+  if(!q) return true;
+  q = q.toLowerCase();
+  if(note.title && note.title.toLowerCase().includes(q)) return true;
+  if(note.type==='text' && note.body && note.body.toLowerCase().includes(q)) return true;
+  if(note.type==='checklist'){
+    return note.items.some(it => it.text.toLowerCase().includes(q));
+  }
+  return false;
+}
+
+function visibleNotes(){
+  let list = state.notes.filter(n=>{
+    if(state.activeFolder === 'all') return true;
+    if(state.activeFolder === 'unfiled') return !n.folderId;
+    return n.folderId === state.activeFolder;
+  }).filter(n => matchesSearch(n, state.search));
+  list.sort((a,b)=>{
+    if(!!b.pinned - !!a.pinned !== 0) return (!!b.pinned) - (!!a.pinned);
+    return b.updatedAt - a.updatedAt;
+  });
+  return list;
+}
+
+/* ---------------- SIDEBAR ---------------- */
+function renderSidebar(){
+  const shelf = $('#tabsShelf');
+  shelf.innerHTML = '';
+
+  const allCount = state.notes.length;
+  const unfiledCount = state.notes.filter(n=>!n.folderId).length;
+
+  shelf.appendChild(makeTab({id:'all', name:'Totes les notes', color:'#4A453D', count: allCount}, state.activeFolder==='all'));
+  shelf.appendChild(makeTab({id:'unfiled', name:'Sense classificar', color:'#8A8478', count: unfiledCount}, state.activeFolder==='unfiled'));
+
+  state.folders.forEach(f=>{
+    const count = state.notes.filter(n=>n.folderId===f.id).length;
+    shelf.appendChild(makeTab(f, state.activeFolder===f.id, true));
+  });
+}
+
+function makeTab(folder, isActive, isCustom){
+  const el = document.createElement('div');
+  el.className = 'tab' + (isActive ? ' active':'');
+  el.style.setProperty('--tab-color', folder.color);
+  const count = folder.id==='all' ? state.notes.length
+    : folder.id==='unfiled' ? state.notes.filter(n=>!n.folderId).length
+    : state.notes.filter(n=>n.folderId===folder.id).length;
+
+  el.innerHTML = `
+    <div class="tlabel">
+      <div class="tname">${escapeHtml(folder.name)}</div>
+      ${folder.type ? `<div class="ttype">${escapeHtml(folder.type)}</div>` : ''}
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;">
+      <div class="tcount">${count}</div>
+      ${isCustom ? `<div class="tmenu" title="Edita la carpeta">⋯</div>` : ''}
+    </div>
+  `;
+  el.addEventListener('click', (e)=>{
+    if(e.target.closest('.tmenu')){
+      openFolderModal(folder);
+      return;
+    }
+    state.activeFolder = folder.id;
+    state.search='';
+    $('#searchInput').value='';
+    render();
+  });
+  return el;
+}
+
+/* ---------------- MAIN VIEW TITLE ---------------- */
+function renderViewTitle(){
+  const dot = document.querySelector('.view-title .dot');
+  const textEl = $('#viewTitleText');
+  const subEl = $('#viewSub');
+  if(state.activeFolder==='all'){
+    textEl.textContent = 'Totes les notes';
+    dot.style.display='none';
+    subEl.textContent = state.notes.length + ' notes en total';
+  } else if(state.activeFolder==='unfiled'){
+    textEl.textContent = 'Sense classificar';
+    dot.style.display='none';
+    subEl.textContent = 'Notes que encara no tenen carpeta';
+  } else {
+    const f = folderById(state.activeFolder);
+    if(f){
+      textEl.textContent = f.name;
+      dot.style.display='inline-block';
+      dot.style.background = f.color;
+      subEl.textContent = f.type ? f.type : '';
+    }
+  }
+}
+
+/* ---------------- GRID / NOTES ---------------- */
+function renderGrid(){
+  const grid = $('#grid');
+  grid.innerHTML = '';
+  const notes = visibleNotes();
+  $('#emptyState').style.display = notes.length ? 'none' : 'flex';
+  notes.forEach(note => grid.appendChild(renderNoteCard(note)));
+}
+
+function renderNoteCard(note){
+  const card = document.createElement('div');
+  card.className = 'note-card';
+  card.style.setProperty('--card-color', note.color || '#FFFDF9');
+
+  let bodyHtml = '';
+  if(note.type === 'checklist'){
+    bodyHtml = note.items.map(it => `
+      <div class="checklist-item ${it.done?'done':''}" data-item="${it.id}">
+        <input type="checkbox" ${it.done?'checked':''} />
+        <span>${escapeHtml(it.text)}</span>
+      </div>
+    `).join('');
+  } else {
+    bodyHtml = `<div class="ncontent">${escapeHtml(note.body||'')}</div>`;
+  }
+
+  const folder = note.folderId ? folderById(note.folderId) : null;
+
+  card.innerHTML = `
+    <div class="ncard-top">
+      <h3>${escapeHtml(note.title||'')}</h3>
+      <button class="icon-btn pin-btn ${note.pinned?'pinned':''}" title="Fixa la nota">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="${note.pinned?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M12 2l1.5 5.5L19 9l-5 3 1 6-3-3-3 3 1-6-5-3 5.5-1.5z"/></svg>
+      </button>
+    </div>
+    ${bodyHtml}
+    <div class="nfooter">
+      <div class="folder-chip">${folder ? escapeHtml(folder.name) : '—'}</div>
+      <div class="nfooter-actions">
+        <button class="icon-btn del-btn" title="Elimina">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+  `;
+
+  card.querySelector('.pin-btn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    note.pinned = !note.pinned;
+    note.updatedAt = Date.now();
+    saveNotes(); render();
+  });
+  card.querySelector('.del-btn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    state.notes = state.notes.filter(n=>n.id !== note.id);
+    saveNotes(); render();
+    showToast('Nota eliminada');
+  });
+  if(note.type === 'checklist'){
+    card.querySelectorAll('.checklist-item input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const itemId = e.target.closest('.checklist-item').dataset.item;
+        const item = note.items.find(i=>i.id===itemId);
+        item.done = !item.done;
+        note.updatedAt = Date.now();
+        saveNotes(); render();
+      });
+    });
+  }
+  card.addEventListener('click', ()=> openNoteModal(note));
+  return card;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ---------------- COMPOSER (quick add) ---------------- */
+let composerState = { color: COLORS[0].value, type: 'text', items: [] };
+
+function populateFolderSelect(selectEl, selectedId){
+  selectEl.innerHTML = '<option value="">Sense carpeta</option>' +
+    state.folders.map(f=>`<option value="${f.id}" ${f.id===selectedId?'selected':''}>${escapeHtml(f.name)}</option>`).join('');
+}
+
+function renderSwatches(container, selectedColor, onPick){
+  container.innerHTML = '';
+  COLORS.forEach(c=>{
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (c.value===selectedColor ? ' selected':'');
+    sw.style.background = c.value;
+    sw.title = c.name;
+    sw.addEventListener('click', (e)=>{ e.stopPropagation(); onPick(c.value); });
+    container.appendChild(sw);
+  });
+}
+
+function initComposer(){
+  const composer = $('#composer');
+  const collapsedText = $('#composerCollapsedText');
+  const expanded = $('#composerExpanded');
+
+  composer.addEventListener('click', ()=>{
+    if(composer.classList.contains('collapsed')) expandComposer();
+  });
+
+  function expandComposer(){
+    composer.classList.remove('collapsed');
+    collapsedText.style.display='none';
+    expanded.style.display='block';
+    populateFolderSelect($('#cFolderSelect'), state.activeFolder!=='all' && state.activeFolder!=='unfiled' ? state.activeFolder : '');
+    function pickComposerColor(val){
+      composerState.color = val;
+      composer.style.setProperty('--card-color', val);
+      composer.style.background = val;
+      renderSwatches($('#cSwatches'), composerState.color, pickComposerColor);
+    }
+    renderSwatches($('#cSwatches'), composerState.color, pickComposerColor);
+    composer.style.background = composerState.color;
+    setTimeout(()=> $('#cTitle').focus(), 30);
+  }
+
+  $('#cChecklistToggle').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    composerState.type = composerState.type === 'text' ? 'checklist' : 'text';
+    if(composerState.type==='checklist' && composerState.items.length===0){
+      composerState.items = [{id:uid(), text:'', done:false}];
+    }
+    renderComposerChecklist();
+  });
+
+  function renderComposerChecklist(){
+    const wrap = $('#cChecklistWrap');
+    const body = $('#cBody');
+    if(composerState.type === 'checklist'){
+      wrap.style.display='block';
+      body.style.display='none';
+      wrap.innerHTML = composerState.items.map((it,idx)=>`
+        <div class="checklist-item" data-idx="${idx}">
+          <input type="checkbox" ${it.done?'checked':''} />
+          <input type="text" placeholder="Element de la llista" value="${escapeHtml(it.text)}" style="border:none;outline:none;background:transparent;font-family:'Karla',sans-serif;font-size:14px;flex:1;color:var(--ink);" />
+        </div>
+      `).join('') + `<div class="modal-add-item" id="cAddItem">+ afegeix un element</div>`;
+
+      wrap.querySelectorAll('input[type=text]').forEach((inp, idx)=>{
+        inp.addEventListener('input', e=> composerState.items[idx].text = e.target.value);
+        inp.addEventListener('keydown', e=>{
+          if(e.key==='Enter'){
+            e.preventDefault();
+            composerState.items.splice(idx+1,0,{id:uid(), text:'', done:false});
+            renderComposerChecklist();
+            const inputs = wrap.querySelectorAll('input[type=text]');
+            inputs[idx+1] && inputs[idx+1].focus();
+          }
+        });
+      });
+      wrap.querySelectorAll('input[type=checkbox]').forEach((cb, idx)=>{
+        cb.addEventListener('click', ()=> composerState.items[idx].done = cb.checked);
+      });
+      $('#cAddItem').addEventListener('click', ()=>{
+        composerState.items.push({id:uid(), text:'', done:false});
+        renderComposerChecklist();
+        wrap.querySelectorAll('input[type=text]')[composerState.items.length-1].focus();
+      });
+    } else {
+      wrap.style.display='none';
+      body.style.display='block';
+    }
+  }
+
+  $('#cCancel').addEventListener('click', (e)=>{ e.stopPropagation(); resetComposer(); });
+
+  $('#cSave').addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const title = $('#cTitle').value.trim();
+    const body = $('#cBody').value.trim();
+    const folderId = $('#cFolderSelect').value || null;
+    const hasChecklistContent = composerState.type==='checklist' && composerState.items.some(i=>i.text.trim());
+    if(!title && !body && !hasChecklistContent) { resetComposer(); return; }
+
+    const note = {
+      id: uid(),
+      title,
+      type: composerState.type,
+      body: composerState.type==='text' ? body : '',
+      items: composerState.type==='checklist' ? composerState.items.filter(i=>i.text.trim()) : [],
+      color: composerState.color,
+      folderId,
+      pinned:false,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    state.notes.unshift(note);
+    await saveNotes();
+    resetComposer();
+    render();
+    showToast('Nota desada');
+  });
+
+  function resetComposer(){
+    composer.classList.add('collapsed');
+    composer.style.background='';
+    collapsedText.style.display='block';
+    expanded.style.display='none';
+    $('#cTitle').value='';
+    $('#cBody').value='';
+    composerState = { color: COLORS[0].value, type:'text', items: [] };
+  }
+
+  document.addEventListener('click', (e)=>{
+    if(!composer.contains(e.target) && !composer.classList.contains('collapsed')){
+      const title = $('#cTitle').value.trim();
+      const body = $('#cBody').value.trim();
+      const hasChecklistContent = composerState.items.some(i=>i.text.trim());
+      if(!title && !body && !hasChecklistContent){
+        resetComposer();
+      }
+    }
+  });
+}
+
+/* ---------------- NOTE EXPANDED MODAL ---------------- */
+function openNoteModal(note){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.setProperty('--card-color', note.color);
+  modal.style.background = note.color;
+
+  let bodyFieldHtml = note.type==='checklist'
+    ? `<div class="modal-checklist" id="mChecklist"></div><div class="modal-add-item" id="mAddItem">+ afegeix un element</div>`
+    : `<textarea class="mbody" id="mBody" placeholder="Escriu alguna cosa…">${escapeHtml(note.body||'')}</textarea>`;
+
+  modal.innerHTML = `
+    <input class="mtitle" id="mTitle" placeholder="Títol" value="${escapeHtml(note.title||'')}" />
+    ${bodyFieldHtml}
+    <div class="modal-bottom">
+      <div class="swatches" id="mSwatches"></div>
+      <select class="folder-select" id="mFolderSelect"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost small" id="mClose">Tanca</button>
+    </div>
+  `;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  populateFolderSelect(modal.querySelector('#mFolderSelect'), note.folderId);
+  function pickModalColor(val){
+    note.color = val;
+    modal.style.background = val;
+    renderSwatches(modal.querySelector('#mSwatches'), val, pickModalColor);
+  }
+  renderSwatches(modal.querySelector('#mSwatches'), note.color, pickModalColor);
+
+  if(note.type==='checklist'){
+    const wrap = modal.querySelector('#mChecklist');
+    function drawItems(){
+      wrap.innerHTML = note.items.map((it,idx)=>`
+        <div class="checklist-item ${it.done?'done':''}" data-idx="${idx}">
+          <input type="checkbox" ${it.done?'checked':''} />
+          <input type="text" value="${escapeHtml(it.text)}" />
+        </div>
+      `).join('');
+      wrap.querySelectorAll('input[type=text]').forEach((inp, idx)=>{
+        inp.addEventListener('input', e=> note.items[idx].text = e.target.value);
+        inp.addEventListener('keydown', e=>{
+          if(e.key==='Enter'){
+            e.preventDefault();
+            note.items.splice(idx+1, 0, {id:uid(), text:'', done:false});
+            drawItems();
+            const inputs = wrap.querySelectorAll('input[type=text]');
+            inputs[idx+1] && inputs[idx+1].focus();
+          }
+        });
+      });
+      wrap.querySelectorAll('input[type=checkbox]').forEach((cb, idx)=>{
+        cb.addEventListener('click', ()=>{ note.items[idx].done = cb.checked; drawItems(); });
+      });
+    }
+    drawItems();
+    modal.querySelector('#mAddItem').addEventListener('click', ()=>{
+      note.items.push({id:uid(), text:'', done:false});
+      drawItems();
+      const inputs = wrap.querySelectorAll('input[type=text]');
+      inputs[inputs.length-1].focus();
+    });
+  }
+
+  async function closeAndSave(){
+    note.title = modal.querySelector('#mTitle').value.trim();
+    if(note.type==='text'){
+      note.body = modal.querySelector('#mBody').value.trim();
+    } else {
+      note.items = note.items.filter(i=>i.text.trim());
+    }
+    note.folderId = modal.querySelector('#mFolderSelect').value || null;
+    note.updatedAt = Date.now();
+    await saveNotes();
+    document.body.removeChild(overlay);
+    render();
+  }
+
+  modal.querySelector('#mClose').addEventListener('click', closeAndSave);
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeAndSave(); });
+  document.addEventListener('keydown', function esc(e){
+    if(e.key==='Escape'){ closeAndSave(); document.removeEventListener('keydown', esc); }
+  });
+}
+
+/* ---------------- FOLDER CREATE / EDIT MODAL ---------------- */
+function openFolderModal(existingFolder){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  const modal = document.createElement('div');
+  modal.className = 'modal modal-folder';
+
+  const isEdit = !!existingFolder;
+  modal.innerHTML = `
+    <div style="font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:16px;">
+      ${isEdit ? 'Edita la carpeta' : 'Nova carpeta'}
+    </div>
+    <div class="form-group">
+      <label class="field-label">Nom</label>
+      <input class="form-input" id="fName" placeholder="p. ex. Viatges" value="${isEdit?escapeHtml(existingFolder.name):''}" />
+    </div>
+    <div class="form-group">
+      <label class="field-label">Tipus (etiqueta lliure)</label>
+      <input class="form-input" id="fType" placeholder="p. ex. viatge, tasca, objectiu…" value="${isEdit?escapeHtml(existingFolder.type||''):''}" />
+    </div>
+    <div class="form-group">
+      <label class="field-label">Color</label>
+      <div class="swatches" id="fColorSwatches"></div>
+    </div>
+    <div class="modal-actions">
+      ${isEdit ? `<button class="btn ghost small" id="fDelete" style="color:#B0473F;margin-right:auto;">Elimina la carpeta</button>` : ''}
+      <button class="btn ghost small" id="fCancel">Cancel·la</button>
+      <button class="btn primary small" id="fSave">${isEdit?'Desa els canvis':'Crea la carpeta'}</button>
+    </div>
+  `;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  let selectedColor = isEdit ? existingFolder.color : FOLDER_COLORS[state.folders.length % FOLDER_COLORS.length];
+  const swatchWrap = modal.querySelector('#fColorSwatches');
+  function drawFolderSwatches(){
+    swatchWrap.innerHTML = '';
+    FOLDER_COLORS.forEach(c=>{
+      const sw = document.createElement('div');
+      sw.className = 'swatch' + (c===selectedColor?' selected':'');
+      sw.style.background = c;
+      sw.addEventListener('click', ()=>{ selectedColor = c; drawFolderSwatches(); });
+      swatchWrap.appendChild(sw);
+    });
+  }
+  drawFolderSwatches();
+
+  function close(){ document.body.removeChild(overlay); }
+  modal.querySelector('#fCancel').addEventListener('click', close);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) close(); });
+
+  modal.querySelector('#fSave').addEventListener('click', async ()=>{
+    const name = modal.querySelector('#fName').value.trim();
+    const type = modal.querySelector('#fType').value.trim();
+    if(!name){ showToast('Posa un nom a la carpeta'); return; }
+    if(isEdit){
+      existingFolder.name = name;
+      existingFolder.type = type;
+      existingFolder.color = selectedColor;
+    } else {
+      state.folders.push({id: uid(), name, type, color: selectedColor});
+    }
+    await saveFolders();
+    close();
+    render();
+    showToast(isEdit ? 'Carpeta actualitzada' : 'Carpeta creada');
+  });
+
+  if(isEdit){
+    modal.querySelector('#fDelete').addEventListener('click', async ()=>{
+      state.folders = state.folders.filter(f=>f.id!==existingFolder.id);
+      state.notes.forEach(n=>{ if(n.folderId===existingFolder.id) n.folderId=null; });
+      if(state.activeFolder===existingFolder.id) state.activeFolder='all';
+      await saveFolders();
+      await saveNotes();
+      close();
+      render();
+      showToast('Carpeta eliminada');
+    });
+  }
+}
+
+/* ---------------- SEARCH ---------------- */
+function initSearch(){
+  $('#searchInput').addEventListener('input', (e)=>{
+    state.search = e.target.value;
+    if(state.search) state.activeFolder = 'all';
+    render();
+  });
+}
+
+/* ---------------- BOOTSTRAP ---------------- */
+function render(){
+  renderSidebar();
+  renderViewTitle();
+  renderGrid();
+}
+
+$('#newFolderBtn').addEventListener('click', ()=> openFolderModal(null));
+
+(async function init(){
+  await loadData();
+  initComposer();
+  initSearch();
+  render();
+})();
+</script>
+</body>
+</html>
